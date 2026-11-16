@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b10">
+  <meta name="description" content="DJ Jaroslav Jahoda Bangers — osobní hudební knihovna a přehrávač.">
+  <title>DJ Jaroslav Jahoda Bangers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080a0f;
+      --panel: #11151e;
+      --panel-2: #171d28;
+      --muted: #929baa;
+      --text: #f5f7fb;
+      --green: #c8ff36;
+      --green-2: #a8e51a;
+      --line: rgba(255,255,255,.08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background-image: radial-gradient(ellipse at 78% -12%, rgba(200,255,54,.12), transparent 34%), radial-gradient(ellipse at 10% 40%, rgba(62,94,160,.10), transparent 34%);
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; padding: 18px 18px 112px; display: grid; grid-template-columns: 238px minmax(0,1fr); gap: 18px; max-width: 1700px; margin: 0 auto; }
+    .sidebar { display: flex; flex-direction: column; gap: 14px; }
+    .brand-card, .nav-card, .side-note { background: rgba(17,21,30,.88); border: 1px solid var(--line); border-radius: var(--radius); }
+    .brand-card { padding: 20px 18px; min-height: 142px; position: relative; overflow: hidden; }
+    .brand-card:after { content:""; position:absolute; width:155px; height:155px; border-radius:50%; background:rgba(200,255,54,.12); filter:blur(28px); right:-72px; bottom:-82px; }
+    .brand-mark { width: 40px; height: 40px; display:grid; place-items:center; border-radius:13px; color:#111; background:var(--green); font-weight:900; font-family:'Space Grotesk',sans-serif; font-size:21px; box-shadow:0 6px 25px rgba(200,255,54,.18); }
+    .brand-name { margin-top: 15px; font: 700 16px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.4px; position:relative; z-index:1; }
+    .brand-sub { margin-top:6px; color:var(--muted); font-size:11px; letter-spacing:1.6px; text-transform:uppercase; position:relative; z-index:1; }
+    .nav-card { padding: 12px; }
+    .nav-label { padding: 5px 10px 9px; color:#687384; font-size:10px; font-weight:800; letter-spacing:1.7px; text-transform:uppercase; }
+    .nav-item { display:flex; align-items:center; gap:12px; width:100%; padding:12px 10px; border:0; border-radius:12px; color:#aeb7c6; background:transparent; text-align:left; font-weight:600; font-size:13px; }
+    .nav-item.active { color:var(--green); background:rgba(200,255,54,.09); }
+    .nav-icon { width:18px; text-align:center; font-size:17px; }
+    .side-note { margin-top:auto; padding:16px; background:linear-gradient(145deg, rgba(200,255,54,.10), rgba(17,21,30,.9) 70%); }
+    .side-note strong { display:block; font:700 13px 'Space Grotesk',sans-serif; margin-bottom:6px; }
+    .side-note p { margin:0; color:var(--muted); font-size:11px; line-height:1.55; }
+    .main { min-width:0; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:5px 3px 20px; }
+    .top-left { display:flex; align-items:center; gap:10px; }
+    .round-nav { width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:rgba(255,255,255,.04); color:#c7cfdb; font-size:18px; }
+    .search-wrap { display:flex; align-items:center; gap:9px; width:min(370px, 42vw); height:42px; border:1px solid var(--line); border-radius:99px; padding:0 14px; background:rgba(255,255,255,.045); }
+    .search-wrap span { color:#8290a3; font-size:17px; }
+    .search-wrap input { min-width:0; width:100%; border:0; outline:0; color:var(--text); background:transparent; font-size:12px; }
+    .search-wrap input::placeholder { color:#7d8898; }
+    .top-actions { display:flex; align-items:center; gap:10px; }
+    .status { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:11px; white-space:nowrap; }
+    .dot { width:7px; height:7px; border-radius:50%; background:#f3b64b; box-shadow:0 0 12px rgba(243,182,75,.35); }
+    .dot.online { background:var(--green); box-shadow:0 0 12px rgba(200,255,54,.45); }
+    .upload-trigger { border:0; border-radius:99px; padding:11px 16px; color:#10140a; background:var(--green); font-size:12px; font-weight:800; box-shadow:0 8px 24px rgba(200,255,54,.12); transition:transform .18s, background .18s; }
+    .upload-trigger:hover { transform:translateY(-1px); background:#d8ff70; }
+    .hero { min-height:280px; border:1px solid rgba(200,255,54,.13); border-radius:24px; padding:34px; position:relative; isolation:isolate; overflow:hidden; background:linear-gradient(105deg, #1c2630 0%, #18202b 44%, #152016 100%); }
+    .hero:before { content:""; position:absolute; z-index:-1; inset:0; opacity:.32; background:radial-gradient(circle at 75% 50%, rgba(200,255,54,.38), transparent 31%), linear-gradient(120deg, transparent 40%, rgba(255,255,255,.045)); }
+    .hero-art { position:absolute; right:8%; top:50%; transform:translateY(-50%) rotate(-13deg); width:210px; height:210px; border-radius:50%; border:1px solid rgba(255,255,255,.19); background:repeating-radial-gradient(circle, #111820 0 3px, #29333d 4px 5px, #121922 6px 9px); box-shadow:0 22px 55px rgba(0,0,0,.4); display:grid; place-items:center; }
+    .hero-art:before { content:""; width:66px; height:66px; border-radius:50%; background:radial-gradient(circle, #d8ff65 0 4px, #242d20 5px 12px, #0c1016 13px 100%); border:4px solid #1c252d; }
+    .hero-copy { max-width:570px; position:relative; z-index:1; }
+    .eyebrow { color:var(--green); font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase; }
+    h1 { margin:13px 0 10px; font:700 clamp(32px,4vw,54px)/.99 'Space Grotesk',sans-serif; letter-spacing:-2.6px; max-width:580px; }
+    .hero p { max-width:420px; margin:0; color:#b2bdc8; line-height:1.6; font-size:13px; }
+    .hero-buttons { display:flex; align-items:center; gap:10px; margin-top:24px; }
+    .primary-play { display:flex; align-items:center; gap:9px; border:0; border-radius:99px; padding:12px 19px; color:#10140a; background:var(--green); font-weight:800; font-size:12px; }
+    .secondary-button { border:1px solid rgba(255,255,255,.17); border-radius:99px; padding:11px 17px; color:#e4e9ef; background:rgba(255,255,255,.05); font-size:12px; font-weight:700; }
+    .section-head { display:flex; align-items:end; justify-content:space-between; gap:14px; margin:30px 2px 13px; }
+    .section-head h2 { margin:0; font:700 21px 'Space Grotesk',sans-serif; letter-spacing:-.6px; }
+    .section-head p { margin:5px 0 0; color:var(--muted); font-size:11px; }
+    .track-count { color:#8c98a7; font-size:11px; }
+    .track-panel { overflow:hidden; border:1px solid var(--line); border-radius:17px; background:rgba(17,21,30,.76); }
+    .track-header, .track-row { display:grid; grid-template-columns:40px minmax(160px,1.7fr) minmax(90px,.8fr) minmax(90px,.7fr) 52px; gap:12px; align-items:center; padding:0 17px; }
+    .track-header { height:40px; color:#778293; border-bottom:1px solid var(--line); font-size:9px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; }
+    .track-row { min-height:65px; border-bottom:1px solid rgba(255,255,255,.045); transition:background .15s; }
+    .track-row:last-child { border-bottom:0; }
+    .track-row:hover { background:rgba(255,255,255,.035); }
+    .track-num { color:#788596; font-size:12px; text-align:center; }
+    .track-main { display:flex; align-items:center; gap:12px; min-width:0; }
+    .cover { width:39px; height:39px; flex:0 0 auto; display:grid; place-items:center; border-radius:9px; color:#d8ff65; font-size:17px; background:linear-gradient(145deg,#26362d,#18202a); border:1px solid rgba(255,255,255,.08); }
+    .track-title { overflow:hidden; color:#edf1f6; font-size:12px; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }
+    .track-artist, .track-date { margin-top:4px; overflow:hidden; color:#8490a0; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+    .track-date { margin:0; }
+    .track-duration { color:#9ba5b2; font-size:11px; text-align:right; font-variant-numeric:tabular-nums; }
+    .row-play { width:30px; height:30px; border:1px solid var(--line); border-radius:50%; color:var(--green); background:rgba(255,255,255,.04); font-size:12px; }
+    .empty-state { padding:44px 22px; text-align:center; }
+    .empty-icon { width:52px; height:52px; display:grid; place-items:center; margin:0 auto 15px; border-radius:17px; color:var(--green); background:rgba(200,255,54,.09); font-size:23px; }
+    .empty-state h3 { margin:0 0 7px; font:700 17px 'Space Grotesk',sans-serif; }
+    .empty-state p { max-width:370px; margin:0 auto; color:var(--muted); font-size:12px; line-height:1.6; }
+    .player { position:fixed; z-index:20; left:18px; right:18px; bottom:14px; max-width:1664px; margin:0 auto; min-height:76px; display:grid; grid-template-columns:minmax(180px,1fr) minmax(240px,1.3fr) minmax(120px,1fr); align-items:center; gap:20px; padding:12px 19px; border:1px solid rgba(255,255,255,.11); border-radius:18px; background:rgba(18,22,30,.94); box-shadow:0 14px 50px rgba(0,0,0,.48); backdrop-filter:blur(20px); }
+    .now-playing { display:flex; align-items:center; gap:11px; min-width:0; }
+    .now-playing .cover { width:43px; height:43px; }
+    .now-playing-copy { min-width:0; }
+    .now-title { overflow:hidden; font-size:11px; font-weight:800; text-overflow:ellipsis; white-space:nowrap; }
+    .now-artist { margin-top:4px; color:var(--muted); font-size:10px; }
+    .player-center { min-width:0; display:flex; flex-direction:column; align-items:center; gap:7px; }
+    .player-buttons { display:flex; align-items:center; gap:18px; }
+    .player-buttons button { border:0; color:#aeb9c7; background:transparent; font-size:16px; }
+    .player-buttons .play-main { width:32px; height:32px; border-radius:50%; color:#111; background:var(--green); font-size:13px; }
+    .progress-line { width:100%; display:flex; align-items:center; gap:9px; color:#8490a0; font-size:9px; font-variant-numeric:tabular-nums; }
+    input[type="range"] { accent-color:var(--green); cursor:pointer; }
+    .progress-line input { min-width:0; width:100%; height:3px; }
+    .volume { display:flex; justify-content:flex-end; align-items:center; gap:9px; color:#8490a0; }
+    .volume input { width:90px; height:3px; }
+    .volume span { font-size:14px; }
+    .modal-backdrop { position:fixed; z-index:50; inset:0; display:none; align-items:center; justify-content:center; padding:18px; background:rgba(0,0,0,.72); backdrop-filter:blur(8px); }
+    .modal-backdrop.open { display:flex; }
+    .modal { width:min(460px,100%); border:1px solid rgba(255,255,255,.12); border-radius:22px; padding:24px; background:#141a24; box-shadow:0 25px 90px rgba(0,0,0,.6); }
+    .modal-top { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+    .modal h2 { margin:0; font:700 21px 'Space Grotesk',sans-serif; }
+    .close-modal { width:32px; height:32px; border:1px solid var(--line); border-radius:50%; color:#bdc6d2; background:rgba(255,255,255,.05); font-size:17px; }
+    .modal-intro { margin:9px 0 20px; color:var(--muted); font-size:12px; line-height:1.55; }
+    .field { display:block; margin:13px 0; }
+    .field span { display:block; margin-bottom:7px; color:#b5bfcb; font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; }
+    .field input { display:block; width:100%; min-height:43px; outline:0; border:1px solid rgba(255,255,255,.11); border-radius:11px; padding:0 13px; color:#f5f7fb; background:#0d121a; font-size:12px; }
+    .field input:focus { border-color:rgba(200,255,54,.55); box-shadow:0 0 0 3px rgba(200,255,54,.08); }
+    .field input[type=file] { padding:10px; }
+    .modal-submit { width:100%; min-height:44px; margin-top:8px; border:0; border-radius:11px; color:#10140a; background:var(--green); font-size:12px; font-weight:900; }
+    .modal-submit:disabled { opacity:.55; cursor:wait; }
+    .form-message { min-height:18px; margin:11px 0 0; color:#f0b8a9; font-size:11px; line-height:1.45; }
+    .form-message.good { color:var(--green); }
+    .file-hint { color:#7f8b9a; font-size:10px; line-height:1.5; }
+    .hidden { display:none !important; }
+    .toast { position:fixed; z-index:70; left:50%; bottom:108px; transform:translate(-50%,12px); opacity:0; pointer-events:none; max-width:calc(100vw - 30px); padding:11px 16px; border:1px solid rgba(200,255,54,.2); border-radius:99px; color:#e8f2d0; background:#192219; box-shadow:0 8px 30px rgba(0,0,0,.3); font-size:11px; transition:all .2s; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media (max-width: 900px) {
+      .app { grid-template-columns:1fr; padding:12px 12px 110px; gap:12px; }
+      .sidebar { display:grid; grid-template-columns:1fr auto; align-items:stretch; }
+      .brand-card { min-height:0; padding:13px 15px; display:grid; grid-template-columns:38px 1fr; column-gap:12px; align-content:center; }
+      .brand-mark { grid-row:span 2; }
+      .brand-name { margin-top:2px; }
+      .brand-sub { margin-top:3px; }
+      .nav-card { display:flex; align-items:center; gap:3px; padding:7px; }
+      .nav-label, .side-note { display:none; }
+      .nav-item { width:auto; padding:10px 11px; font-size:0; gap:0; }
+      .nav-icon { font-size:17px; }
+      .topbar { padding-bottom:14px; }
+      .hero { min-height:250px; padding:27px; }
+      .hero-art { right:3%; width:165px; height:165px; opacity:.62; }
+    }
+    @media (max-width: 620px) {
+      .sidebar { grid-template-columns:1fr; }
+      .nav-card { display:none; }
+      .topbar { flex-wrap:wrap; }
+      .top-left { flex:1; }
+      .search-wrap { width:100%; }
+      .top-actions { margin-left:auto; }
+      .status { display:none; }
+      .hero { min-height:275px; padding:24px 21px; }
+      .hero-art { width:120px; height:120px; right:-24px; top:76%; opacity:.36; }
+      h1 { font-size:37px; letter-spacing:-1.8px; }
+      .hero p { max-width:290px; font-size:12px; }
+      .track-header, .track-row { grid-template-columns:24px minmax(0,1fr) 44px; gap:8px; padding:0 10px; }
+      .track-header > :nth-child(3), .track-header > :nth-child(4), .track-row > .track-date { display:none; }
+      .track-duration { display:none; }
+      .track-row { min-height:62px; }
+      .track-header > :nth-child(5) { display:none; }
+      .track-row .row-play { grid-column:3; grid-row:1; }
+      .player { left:8px; right:8px; bottom:8px; grid-template-columns:minmax(0,1fr) auto; gap:10px; padding:10px 12px; min-height:70px; }
+      .player-center { grid-column:2; grid-row:1; }
+      .player-buttons { gap:10px; }
+      .player-buttons button:not(.play-main) { display:none; }
+      .progress-line { display:none; }
+      .volume { display:none; }
+      .now-playing .cover { width:39px; height:39px; }
+      .toast { bottom:88px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <div class="brand-mark">JJ</div>
+        <div class="brand-name">DJ JAROSLAV JAHODA</div>
+        <div class="brand-sub">Bangers · music club</div>
+      </div>
+      <nav class="nav-card" aria-label="Hlavní navigace">
+        <div class="nav-label">Menu</div>
+        <button class="nav-item active" type="button"><span class="nav-icon">⌂</span> Domů</button>
+        <button class="nav-item" type="button" id="libraryNav"><span class="nav-icon">▤</span> Tvoje knihovna</button>
+      </nav>
+      <div class="side-note">
+        <strong>Vlastní hudební vesmír.</strong>
+        <p>Všechny nahrané tracky se ukládají online, takže zůstanou dostupné i po zavření stránky.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="top-left">
+          <button class="round-nav" type="button" aria-label="Zpět">‹</button>
+          <button class="round-nav" type="button" aria-label="Vpřed">›</button>
+        </div>
+        <label class="search-wrap"><span>⌕</span><input id="searchInput" type="search" placeholder="Hledat track nebo interpreta…" autocomplete="off"></label>
+        <div class="top-actions">
+          <div class="status"><i class="dot" id="connectionDot"></i><span id="connectionText">Připojuji knihovnu…</span></div>
+          <button class="upload-trigger" id="openUpload" type="button">＋ Přidat hudbu</button>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div class="hero-art" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <div class="eyebrow">Oficiální domácí sound system</div>
+          <h1>DJ JAROSLAV<br>JAHODA BANGERS</h1>
+          <p>Jedna knihovna. Jenom pořádný tracky. Vítej v osobním hudebním vesmíru DJ Jaroslava Jahody.</p>
+          <div class="hero-buttons">
+            <button class="primary-play" id="playAll" type="button"><span>▶</span> Přehrát výběr</button>
+            <button class="secondary-button" id="shuffleAll" type="button">⤨ Náhodně</button>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="tracksHeading">
+        <div class="section-head">
+          <div><h2 id="tracksHeading">Tvoje bangers</h2><p>Hudba nahraná do společné knihovny</p></div>
+          <div class="track-count" id="trackCount">0 skladeb</div>
+        </div>
+        <div class="track-panel">
+          <div class="track-header"><div>#</div><div>Název tracku</div><div>Datum přidání</div><div>Délka</div><div></div></div>
+          <div id="trackList">
+            <div class="empty-state"><div class="empty-icon">♫</div><h3>Načítám tvoje bangers…</h3><p>Za okamžik se zobrazí dostupná hudba z online knihovny.</p></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="player" aria-label="Hudební přehrávač">
+    <div class="now-playing">
+      <div class="cover">♫</div>
+      <div class="now-playing-copy"><div class="now-title" id="nowTitle">Nic se nepřehrává</div><div class="now-artist" id="nowArtist">Vyber track z knihovny</div></div>
+    </div>
+    <div class="player-center">
+      <div class="player-buttons">
+        <button type="button" id="prevTrack" aria-label="Předchozí track">|◀</button>
+        <button type="button" class="play-main" id="togglePlay" aria-label="Přehrát">▶</button>
+        <button type="button" id="nextTrack" aria-label="Další track">▶|</button>
+      </div>
+      <div class="progress-line"><span id="currentTime">0:00</span><input id="seekBar" type="range" min="0" max="1000" value="0" aria-label="Pozice přehrávání"><span id="totalTime">0:00</span></div>
+    </div>
+    <div class="volume"><span>◖</span><input id="volumeBar" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Hlasitost"></div>
+  </footer>
+
+  <div class="modal-backdrop" id="uploadModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-top"><h2 id="modalTitle">Vstup do DJ zóny</h2><button class="close-modal" id="closeUpload" type="button" aria-label="Zavřít">×</button></div>
+      <p class="modal-intro" id="modalIntro">Zadej tajný kód. Po ověření se ti odemkne nahrávání hudby do knihovny.</p>
+      <form id="unlockForm">
+        <label class="field"><span>Tajný kód</span><input id="secretCode" type="password" autocomplete="current-password" placeholder="••••••••••••" required></label>
+        <button class="modal-submit" id="unlockButton" type="submit">Odemknout nahrávání</button>
+      </form>
+      <form id="uploadForm" class="hidden">
+        <label class="field"><span>Název tracku</span><input id="trackTitle" type="text" maxlength="120" placeholder="Název skladby" required></label>
+        <label class="field"><span>Interpret</span><input id="trackArtist" type="text" maxlength="120" value="DJ Jaroslav Jahoda" required></label>
+        <label class="field"><span>Audio soubor</span><input id="audioFile" type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.opus,.flac" required></label>
+        <div class="file-hint">Podporované formáty: MP3, WAV, M4A, AAC, OGG, OPUS a FLAC. Maximální velikost jednoho souboru je 50 MB.</div>
+        <button class="modal-submit" id="uploadButton" type="submit">↑ Nahrát do knihovny</button>
+      </form>
+      <p class="form-message" id="formMessage" aria-live="polite"></p>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    // DOPLŇ ÚDAJE ZE SUPABASE DASHBOARDU — veřejný publishable/anon klíč patří do webu.
+    // Tajný upload kód ani service_role/secret key sem NIKDY NEVKLÁDEJ.
+    const SUPABASE_URL = 'DOPLN_SUPABASE_PROJECT_URL';
+    const SUPABASE_PUBLIC_KEY = 'DOPLN_SUPABASE_PUBLISHABLE_NEBO_ANON_KEY';
+    const BUCKET = 'tracks';
+    const MAX_FILE_BYTES = 50 * 1024 * 1024;
+
+    const $ = (id) => document.getElementById(id);
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    audio.volume = 0.8;
+    let supabase = null;
+    let tracks = [];
+    let visibleTracks = [];
+    let currentIndex = -1;
+    let uploadCode = '';
+    let toastTimer = null;
+
+    const formatTime = (seconds) => {
+      if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
+      return `${mins}:${secs}`;
+    };
+    const prettyDate = (value) => {
+      if (!value) return '—';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('cs-CZ', { day:'numeric', month:'short', year:'numeric' }).format(date);
+    };
+    const showToast = (message) => {
+      const toast = $('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+    };
+    const setMessage = (message, good = false) => {
+      $('formMessage').textContent = message;
+      $('formMessage').classList.toggle('good', good);
+    };
+    const setConnection = (online, text) => {
+      $('connectionDot').classList.toggle('online', online);
+      $('connectionText').textContent = text;
+    };
+    const escapeText = (value) => String(value ?? '');
+
+    function setEmptyState(title, message) {
+      const container = $('trackList');
+      container.replaceChildren();
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      const icon = document.createElement('div'); icon.className = 'empty-icon'; icon.textContent = '♫';
+      const heading = document.createElement('h3'); heading.textContent = title;
+      const paragraph = document.createElement('p'); paragraph.textContent = message;
+      empty.append(icon, heading, paragraph);
+      container.append(empty);
+    }
+
+    function renderTracks() {
+      const query = $('searchInput').value.trim().toLocaleLowerCase('cs');
+      visibleTracks = tracks.filter((track) => `${track.title} ${track.artist}`.toLocaleLowerCase('cs').includes(query));
+      $('trackCount').textContent = `${tracks.length} ${tracks.length === 1 ? 'skladba' : tracks.length >= 2 && tracks.length <= 4 ? 'skladby' : 'skladeb'}`;
+      const container = $('trackList');
+      container.replaceChildren();
+      if (visibleTracks.length === 0) {
+        setEmptyState(query ? 'Nic jsme nenašli' : 'Tady zatím hraje ticho', query ? 'Zkus jiné slovo nebo jméno interpreta.' : 'Knihovna je zatím prázdná. Odemkni DJ zónu a nahraj první track.');
+        return;
+      }
+      visibleTracks.forEach((track, index) => {
+        const row = document.createElement('div'); row.className = 'track-row';
+        const number = document.createElement('div'); number.className = 'track-num'; number.textContent = String(index + 1).padStart(2, '0');
+        const main = document.createElement('div'); main.className = 'track-main';
+        const cover = document.createElement('div'); cover.className = 'cover'; cover.textContent = '♫';
+        const copy = document.createElement('div'); copy.style.minWidth = '0';
+        const title = document.createElement('div'); title.className = 'track-title'; title.textContent = escapeText(track.title);
+        const artist = document.createElement('div'); artist.className = 'track-artist'; artist.textContent = escapeText(track.artist);
+        copy.append(title, artist); main.append(cover, copy);
+        const date = document.createElement('div'); date.className = 'track-date'; date.textContent = prettyDate(track.created_at);
+        const duration = document.createElement('div'); duration.className = 'track-duration'; duration.textContent = track.duration_text || '—';
+        const play = document.createElement('button'); play.className = 'row-play'; play.type = 'button'; play.textContent = '▶'; play.setAttribute('aria-label', `Přehrát ${track.title}`);
+        play.addEventListener('click', () => playTrack(tracks.indexOf(track)));
+        row.append(number, main, date, duration, play);
+        container.append(row);
+      });
+    }
+
+    function updatePlayer() {
+      const track = tracks[currentIndex];
+      $('nowTitle').textContent = track ? track.title : 'Nic se nepřehrává';
+      $('nowArtist').textContent = track ? track.artist : 'Vyber track z knihovny';
+      $('togglePlay').textContent = audio.paused ? '▶' : 'Ⅱ';
+      $('togglePlay').setAttribute('aria-label', audio.paused ? 'Přehrát' : 'Pozastavit');
+      $('currentTime').textContent = formatTime(audio.currentTime);
+      $('totalTime').textContent = formatTime(audio.duration);
+      $('seekBar').value = Number.isFinite(audio.duration) && audio.duration > 0 ? String(Math.round(audio.currentTime / audio.duration * 1000)) : '0';
+    }
+
+    async function playTrack(index) {
+      if (!Number.isInteger(index) || index < 0 || index >= tracks.length) return;
+      const track = tracks[index];
+      if (!track.public_url) {
+        showToast('K této skladbě se nepodařilo najít audio soubor.');
+        return;
+      }
+      currentIndex = index;
+      audio.src = track.public_url;
+      updatePlayer();
+      try { await audio.play(); }
+      catch (error) { showToast('Přehrávání se nepodařilo spustit. Zkus to znovu.'); }
+      updatePlayer();
+    }
+    function playNext(direction = 1) {
+      if (!tracks.length) return;
+      const next = currentIndex < 0 ? 0 : (currentIndex + direction + tracks.length) % tracks.length;
+      playTrack(next);
+    }
+
+    async function loadTracks() {
+      if (!supabase) {
+        setConnection(false, 'Doplň Supabase');
+        setEmptyState('Ještě chybí propojení', 'V index.html doplň SUPABASE_URL a veřejný publishable/anon klíč. Postup je v souboru README.md.');
+        return;
+      }
+      setConnection(false, 'Načítám knihovnu…');
+      const { data, error } = await supabase.from('tracks').select('id,title,artist,storage_path,created_at').order('created_at', { ascending: false });
+      if (error) {
+        console.error('Supabase load error:', error);
+        setConnection(false, 'Chyba připojení');
+        setEmptyState('Knihovnu se nepodařilo načíst', 'Zkontroluj Supabase URL, veřejný klíč a SQL nastavení podle README.md.');
+        return;
+      }
+      tracks = (data || []).map((track) => ({
+        ...track,
+        public_url: supabase.storage.from(BUCKET).getPublicUrl(track.storage_path).data.publicUrl,
+        duration_text: ''
+      }));
+      setConnection(true, 'Knihovna online');
+      renderTracks();
+      // Získá délku nahrávek bez stahování celého audio souboru.
+      tracks.forEach((track) => {
+        const probe = document.createElement('audio');
+        probe.preload = 'metadata';
+        probe.src = track.public_url;
+        probe.addEventListener('loadedmetadata', () => {
+          track.duration_text = formatTime(probe.duration);
+          renderTracks();
+        }, { once: true });
+        probe.addEventListener('error', () => { track.duration_text = '—'; }, { once: true });
+      });
+    }
+
+    async function callUploadGateway(payload) {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/upload-gateway`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_PUBLIC_KEY },
+        body: JSON.stringify(payload)
+      });
+      let result;
+      try { result = await response.json(); } catch { result = {}; }
+      if (!response.ok) throw new Error(result.error || `Server vrátil chybu ${response.status}.`);
+      return result;
+    }
+
+    function openModal() {
+      $('uploadModal').classList.add('open');
+      $('formMessage').textContent = '';
+      $('unlockForm').classList.remove('hidden');
+      $('uploadForm').classList.add('hidden');
+      $('modalTitle').textContent = 'Vstup do DJ zóny';
+      $('modalIntro').textContent = 'Zadej tajný kód. Po ověření se ti odemkne nahrávání hudby do knihovny.';
+      $('secretCode').value = '';
+      $('secretCode').focus();
+    }
+    function closeModal() {
+      $('uploadModal').classList.remove('open');
+      uploadCode = '';
+      $('secretCode').value = '';
+      $('audioFile').value = '';
+    }
+
+    $('openUpload').addEventListener('click', openModal);
+    $('closeUpload').addEventListener('click', closeModal);
+    $('uploadModal').addEventListener('click', (event) => { if (event.target === $('uploadModal')) closeModal(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeModal(); });
+    $('libraryNav').addEventListener('click', () => $('tracksHeading').scrollIntoView({ behavior:'smooth', block:'start' }));
+    $('searchInput').addEventListener('input', renderTracks);
+    $('playAll').addEventListener('click', () => playTrack(0));
+    $('shuffleAll').addEventListener('click', () => { if (!tracks.length) return showToast('Knihovna je zatím prázdná.'); playTrack(Math.floor(Math.random() * tracks.length)); });
+    $('togglePlay').addEventListener('click', async () => {
+      if (!audio.src) return playTrack(0);
+      if (audio.paused) { try { await audio.play(); } catch { showToast('Přehrávání se nepodařilo spustit.'); } }
+      else audio.pause();
+      updatePlayer();
+    });
+    $('prevTrack').addEventListener('click', () => playNext(-1));
+    $('nextTrack').addEventListener('click', () => playNext(1));
+    $('seekBar').addEventListener('input', () => { if (Number.isFinite(audio.duration)) audio.currentTime = Number($('seekBar').value) / 1000 * audio.duration; });
+    $('volumeBar').addEventListener('input', () => { audio.volume = Number($('volumeBar').value); });
+    audio.addEventListener('timeupdate', updatePlayer);
+    audio.addEventListener('loadedmetadata', updatePlayer);
+    audio.addEventListener('play', updatePlayer);
+    audio.addEventListener('pause', updatePlayer);
+    audio.addEventListener('ended', () => playNext(1));
+    audio.addEventListener('error', () => { if (audio.src) showToast('Audio se nepodařilo načíst.'); });
+
+    $('unlockForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const code = $('secretCode').value;
+      const button = $('unlockButton');
+      button.disabled = true; button.textContent = 'Ověřuji kód…'; setMessage('');
+      try {
+        if (!supabase) throw new Error('Nejdřív doplň Supabase nastavení v index.html.');
+        await callUploadGateway({ action:'unlock', code });
+        uploadCode = code;
+        $('unlockForm').classList.add('hidden');
+        $('uploadForm').classList.remove('hidden');
+        $('modalTitle').textContent = 'Nahraj nový banger';
+        $('modalIntro').textContent = 'Přístup ověřen. Vyber audio soubor a přidej ho do knihovny.';
+        setMessage('Přístup povolen.', true);
+      } catch (error) {
+        setMessage(error.message || 'Kód se nepodařilo ověřit.');
+      } finally {
+        button.disabled = false; button.textContent = 'Odemknout nahrávání';
+      }
+    });
+
+    $('audioFile').addEventListener('change', () => {
+      const file = $('audioFile').files?.[0];
+      if (file && !$('trackTitle').value.trim()) {
+        $('trackTitle').value = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
+      }
+    });
+
+    $('uploadForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const file = $('audioFile').files?.[0];
+      if (!file) return setMessage('Nejdřív vyber audio soubor.');
+      if (file.size > MAX_FILE_BYTES) return setMessage('Soubor je větší než povolených 50 MB.');
+      const title = $('trackTitle').value.trim();
+      const artist = $('trackArtist').value.trim();
+      if (!title || !artist) return setMessage('Vyplň název tracku i interpreta.');
+      const button = $('uploadButton');
+      button.disabled = true; button.textContent = 'Nahrávám…'; setMessage('Připravuji bezpečné nahrávání…', true);
+      try {
+        const start = await callUploadGateway({ action:'start', code:uploadCode, fileName:file.name, fileSize:file.size, contentType:file.type || 'application/octet-stream', title, artist });
+        setMessage('Nahrávám audio do cloudového úložiště…', true);
+        const { error: uploadError } = await supabase.storage.from(BUCKET).uploadToSignedUrl(start.path, start.token, file, { contentType:file.type || 'application/octet-stream', cacheControl:'3600' });
+        if (uploadError) throw uploadError;
+        await callUploadGateway({ action:'complete', code:uploadCode, path:start.path, title, artist });
+        await loadTracks();
+        closeModal();
+        showToast('Hotovo! Track je uložený v knihovně.');
+      } catch (error) {
+        console.error('Upload error:', error);
+        setMessage(error.message || 'Nahrávání se nepodařilo.');
+      } finally {
+        button.disabled = false; button.textContent = '↑ Nahrát do knihovny';
+      }
+    });
+
+    if (SUPABASE_URL.startsWith('http') && !SUPABASE_URL.includes('DOPLN_') && SUPABASE_PUBLIC_KEY && !SUPABASE_PUBLIC_KEY.includes('DOPLN_')) {
+      supabase = createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY);
+    }
+    loadTracks();
+    updatePlayer();
+  </script>
+</body>
+</html>
